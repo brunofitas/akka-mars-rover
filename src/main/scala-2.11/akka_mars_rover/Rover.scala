@@ -85,32 +85,39 @@ class Rover(val grid:Grid) extends Actor with ActorLogging{
 
           if(status == MOVING || status == WAITING){
 
-            val directionPreview : Array[Array[CardinalDirection]] =
-              compass.preview(compass.current, direction)
+            Try {
 
-            val cardinalDir : CardinalDirection =
-              compass.getDirection(directionPreview)
+              val directionPreview: Array[Array[CardinalDirection]] =
+                compass.preview(compass.current, direction)
 
-            val nextCoord:Coordinates =
-              gps.nextSector( currentPosition.coord, cardinalDir)
+              val cardinalDir: CardinalDirection =
+                compass.getDirection(directionPreview)
 
-            grid.validCoordinates(nextCoord) match {
-              case false =>
-                status = LOST
-              case true =>
-                grid.occupiedPosition(nextCoord) match {
-                  case true =>
-                    status = WAITING
-                  case false => {
-                    status = MOVING
-                    compass.current = directionPreview
-                    currentPosition = Position(nextCoord, cardinalDir)
-                    grid.update(self, currentPosition)
-                    dirBuffer.remove(0)
+              val nextCoord: Coordinates =
+                gps.nextSector(currentPosition.coord, cardinalDir)
+
+              grid.validCoordinates(nextCoord) match {
+                case false =>
+                  status = LOST
+                case true =>
+                  grid.occupiedPosition(nextCoord) match {
+                    case true =>
+                      status = WAITING
+                    case false => {
+                      status = MOVING
+                      compass.current = directionPreview
+                      currentPosition = Position(nextCoord, cardinalDir)
+                      grid.update(self, currentPosition)
+                      dirBuffer.remove(0)
+                    }
                   }
-                }
+              }
+
             }
-            scheduler.scheduleOnce(speed seconds, self, ProcessQueue)
+            match {
+              case Success(s) => scheduler.scheduleOnce(speed seconds, self, ProcessQueue)
+              case Failure(f) => status = LOST
+            }
           }
       }
 

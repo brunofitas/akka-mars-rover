@@ -1,7 +1,7 @@
 package akka_mars_rover
 
-import akka.actor.{Props, ActorSystem, ActorRef}
-import akka.testkit.{TestProbe, TestKitBase, TestActorRef}
+import akka.actor.{Props, ActorSystem}
+import akka.testkit.{TestProbe, TestKitBase}
 import akka_mars_rover.Rover._
 import akka_mars_rover.Rover.RoverStatus._
 import akka_mars_rover.lib.Com.{CommandError, CommandSuccess}
@@ -23,7 +23,7 @@ class RoverTests extends FlatSpec with Matchers with TestKitBase{
 
   behavior of "Rover"
 
-  "RoverDeploy" must "deploy a rover" in {
+  "RoverDeploy" must "deploy a rover with a valid position" in {
     probe.send(rover, Deploy(Position(Coordinates(0,0), SOUTH)))
     probe.expectMsg(CommandSuccess(201, Some("Rover deployed")))
   }
@@ -44,54 +44,55 @@ class RoverTests extends FlatSpec with Matchers with TestKitBase{
   }
 
 
-
   "RoverInfoRequest" must "return rover position" in {
     probe.send(rover, InfoRequest())
     probe.expectMsg(InfoResponse(STOPPED,Position(Coordinates(0,0),SOUTH)))
   }
 
 
-
   "Directions" must "run directional commands" in {
 
-    // Rover 1 at (0,0) South
+    println("Rover 1 is at (0,0) SOUTH")
     probe.send(rover, InfoRequest())
     probe.expectMsg(InfoResponse(STOPPED, Position(Coordinates(0,0), SOUTH)))
 
-    // Rover 1 - execute directions
+
+    println("Sending directions to ROVER 1")
     probe.send(rover, Execute(List[Direction](LEFT, RIGHT, FORWARD, LEFT, LEFT, RIGHT, FORWARD, BACKWARD)))
     probe.expectMsg(CommandSuccess(200))
 
 
-    // Rover 1 stops at (1,3) West
     Thread sleep 10000
+    println("ROVER 1 stops at (1,3) WEST")
     probe.send(rover, InfoRequest())
     probe.expectMsg(InfoResponse(STOPPED, Position(Coordinates(1,3), WEST)))
 
 
-    // Rover 2 is deployed at (0,3) South
+    println("ROVER 2 is deployed at (0,3) SOUTH")
     probe.send(rover2, Deploy(Position(Coordinates(0,3), SOUTH)))
     probe.expectMsg(CommandSuccess(201, Some("Rover deployed")))
 
-    // Rover 2 is sent forward to (1,3) South
+
+    println("ROVER 2 is sent forward to (1,3) SOUTH")
     probe.send(rover2, Execute(List[Direction](FORWARD)))
     probe.expectMsg(CommandSuccess(200))
 
-    // Rover 2 is waiting since (1,3) is occupied
+
+    println("ROVER 2 has to wait since (1,3) is occupied ")
     Thread.sleep(2000)
     probe.send(rover2, InfoRequest())
     probe.expectMsg(InfoResponse(WAITING, Position(Coordinates(0,3), SOUTH), Some(List(FORWARD))))
 
-    // Rover 1 gets out of the way
+    println("ROVER 1 gets out of the way")
     probe.send(rover, Execute(List[Direction](FORWARD)))
     probe.expectMsg(CommandSuccess(200))
 
-    // Rover 1 is now at (1,2) West
+    println("ROVER 1 is now at (1,2) WEST")
     Thread sleep 2000
     probe.send(rover, InfoRequest())
     probe.expectMsg(InfoResponse(STOPPED, Position(Coordinates(1,2), WEST)))
 
-    // Rover 2 is now at (1,3) South
+    println("ROVER 2 is now at (1,3) SOUTH")
     Thread.sleep(2000)
     probe.send(rover2, InfoRequest())
     probe.expectMsg(InfoResponse(STOPPED, Position(Coordinates(1,3), SOUTH)))

@@ -17,8 +17,8 @@ Example data
 
 Rover 
 
-#1: Starting position (0, 0) and facing North. Movement list - ffrff. Ending position (2,2) E
+1: Starting position (0, 0) and facing North. Movement list - ffrff. Ending position (2,2) E
 
-#2: (50,50) E - ffl - (50,52) N
+2: (50,50) E - ffl - (50,52) N
 
-#3: (23,73) S - ffrblff - (24,69) S
+3: (23,73) S - ffrblff - (24,69) S
